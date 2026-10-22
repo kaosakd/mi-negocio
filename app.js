@@ -199,16 +199,26 @@
         </li>`).join('') || '<li>No hay deudas pendientes</li>'}</ul>`;
   }
 
-  window.cobrarCredito = async (id, monto) => {
-    const m = prompt("Método de pago: 1. Efectivo, 2. QR");
-    const metodo = m === '2' ? 'QR' : 'Efectivo';
-    try {
-      await sb.from('pagos_creditos').insert({ venta_id: id, monto_pagado: monto, metodo_pago: metodo });
-      await sb.from('ventas').update({ estado_pago: 'Pagado' }).eq('id', id);
-      toast('✅ Cobro registrado'); viewCreditos();
-    } catch (e) { toast(errMsg(e), false); }
-  };
-
+window.cobrarCredito = async (id, monto) => {
+  const m = prompt("Método de pago: 1. Efectivo, 2. QR");
+  if (m !== '1' && m !== '2') return; // Si cancela, no hace nada
+  const metodo = m === '2' ? 'QR' : 'Efectivo';
+  
+  try {
+    // Llamamos a la nueva función de la base de datos
+    await sb.rpc('registrar_pago_credito', { 
+      p_venta_id: id, 
+      p_monto: monto, 
+      p_metodo: metodo 
+    });
+    
+    toast('✅ Cobro registrado');
+    viewCreditos(); // Recargar la lista de deudas
+    loadState();    // Recargar el resumen principal (por si acaso)
+  } catch (e) { 
+    toast(errMsg(e), false); 
+  }
+};
   async function viewReportes() {
     openSheet('Reportes Financieros', `
       <div class="space-y-4">
