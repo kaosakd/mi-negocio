@@ -50,10 +50,14 @@
       sb.from('ventas').select('total').gte('fecha_hora', inicioDeHoyISO()),
       sb.from('vw_movimientos').select('tipo,producto,cantidad,total,fecha_hora').order('fecha_hora', { ascending: false }).limit(5),
     ]);
-    DB.clientes = cli.data; DB.proveedores = prov.data; DB.productos = prod.data.map(x => ({ ...x, precio_venta: Number(x.precio_venta), costo_compra: Number(x.costo_compra), stock_actual: Number(x.stock_actual) }));
-    DB.hoy = { total: vh.data.reduce((a, v) => a + Number(v.total), 0), n: vh.data.length };
-    DB.ultimas = ul.data.map(t => ({ ...t, cantidad: Number(t.cantidad), total: Number(t.total) }));
-    renderSummary();
+        DB.clientes = cli.data || []; 
+    DB.proveedores = prov.data || []; 
+    DB.productos = (prod.data || []).map(x => ({ ...x, precio_venta: Number(x.precio_venta), costo_compra: Number(x.costo_compra), stock_actual: Number(x.stock_actual) }));
+    DB.hoy = { 
+      total: (vh.data || []).reduce((a, v) => a + Number(v.total), 0), 
+      n: (vh.data || []).length 
+    };
+    DB.ultimas = (ul.data || []).map(t => ({ ...t, cantidad: Number(t.cantidad || 1), total: Number(t.total) }));
   }
 
   function renderSummary() {
