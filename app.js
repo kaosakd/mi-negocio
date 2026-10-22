@@ -62,7 +62,7 @@
     const bajo = DB.productos.filter(p => p.stock_actual <= LOW);
     show('#boxBajo', bajo.length > 0);
     $('#listBajo').innerHTML = bajo.map(p => `<li class="flex justify-between"><span>${esc(p.nombre)}</span><b class="${p.stock_actual === 0 ? 'text-red-700' : 'text-amber-600'}">${p.stock_actual} u.</b></li>`).join('');
-    $('#listUlt').innerHTML = DB.ultimas.length ? DB.ultimas.map(t => `<li class="py-2 flex items-center gap-3"><span class="text-xl">${t.tipo === 'venta' ? '💰' : '🛒'}</span><div class="flex-1 min-w-0"><div class="truncate">${esc(t.producto)} × ${t.cantidad}</div><div class="text-xs text-slate-400">${fmtFecha(t.fecha_hora)}</div></div><b class="${t.tipo === 'venta' ? 'text-emerald-600' : 'text-amber-600'}">${t.tipo === 'venta' ? '+' : '−'}${money(t.total)}</b></li>`).join('') : '<li class="py-3 text-slate-400">Sin transacciones.</li>';
+    $('#listUlt').innerHTML = DB.ultimas.length ? DB.ultimas.map(t => `<li class="py-2 flex items-center gap-3"><span class="text-xl">${t.tipo === 'venta' ? '💰' : t.tipo === 'pago_credito' ? '💵' : '🛒'}</span><div class="flex-1 min-w-0"><div class="truncate">${esc(t.producto)} × ${t.cantidad}</div><div class="text-xs text-slate-400">${fmtFecha(t.fecha_hora)}</div></div><b class="${t.tipo === 'venta' ? 'text-emerald-600' : 'text-amber-600'}">${t.tipo === 'venta' ? '+' : '−'}${money(t.total)}</b></li>`).join('') : '<li class="py-3 text-slate-400">Sin transacciones.</li>';
   }
 
   function openSheet(title, html) { $('#sheetTitle').textContent = title; $('#sheetBody').innerHTML = html; show('#overlay', true); document.body.style.overflow = 'hidden'; }
@@ -87,7 +87,11 @@
     cliente: d => sb.from('clientes').insert({ nombre: d.nombre.trim(), telefono: (d.telefono || '').trim(), email: (d.email || '').trim() }).then(must),
     proveedor: d => sb.from('proveedores').insert({ nombre: d.nombre.trim(), contacto: (d.contacto || '').trim(), telefono: (d.telefono || '').trim() }).then(must),
     producto: d => sb.from('productos').insert({ nombre: d.nombre.trim(), descripcion: (d.descripcion || '').trim(), precio_venta: Number(d.precio_venta), costo_compra: Number(d.costo_compra), stock_actual: parseInt(d.stock_actual, 10) || 0, proveedor_id: d.proveedor_id ? Number(d.proveedor_id) : null }).then(must),
-    venta: d => sb.rpc('registrar_venta', { p_cliente_id: Number(d.cliente_id), p_producto_id: Number(d.producto_id), p_cantidad: parseInt(d.cantidad, 10), p_metodo_pago: d.metodo_pago }).then(must),
+    venta: (cliente_id, metodo_pago, carrito) => sb.rpc('registrar_venta_completa', { 
+  p_cliente_id: Number(cliente_id), 
+  p_metodo_pago: metodo_pago, 
+  p_productos: carrito 
+}).then(must),
     compra: d => sb.rpc('registrar_compra', { p_proveedor_id: Number(d.proveedor_id), p_producto_id: Number(d.producto_id), p_cantidad: parseInt(d.cantidad, 10), p_costo_unitario: Number(d.costo_unitario) }).then(must),
   };
 
@@ -148,7 +152,7 @@
       renderCart();
     };
 
-    $('#btnConfirmVenta').onclick = async () => {
+        $('#btnConfirmVenta').onclick = async () => {
       const cliId = $('#selCli').value;
       const met = $('#metPago').value;
       if (!cliId) return toast('Selecciona un cliente', false);
@@ -156,13 +160,17 @@
       
       $('#btnConfirmVenta').disabled = true;
       try {
-        for (const item of carrito) {
-          await acciones.venta({ cliente_id: cliId, producto_id: item.id, cantidad: item.qty, metodo_pago: met });
-        }
+        // Enviamos todo el carrito de una sola vez a la nueva función
+        await acciones.venta(cliId, met, carrito);
+        
         toast('✅ Venta registrada');
         closeSheet();
         loadState();
-      } catch (e) { toast(errMsg(e), false); } finally { $('#btnConfirmVenta').disabled = false; }
+      } catch (e) { 
+        toast(errMsg(e), false); 
+      } finally { 
+        $('#btnConfirmVenta').disabled = false; 
+      }
     };
   }
 
