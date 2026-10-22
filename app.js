@@ -201,22 +201,30 @@
 
 window.cobrarCredito = async (id, monto) => {
   const m = prompt("Método de pago: 1. Efectivo, 2. QR");
-  if (m !== '1' && m !== '2') return; // Si cancela, no hace nada
+  if (m !== '1' && m !== '2') return; 
   const metodo = m === '2' ? 'QR' : 'Efectivo';
   
   try {
-    // Llamamos a la nueva función de la base de datos
-    await sb.rpc('registrar_pago_credito', { 
+    // 1. Llamamos a la función de la base de datos y esperamos su respuesta
+    const { error } = await sb.rpc('registrar_pago_credito', { 
       p_venta_id: id, 
       p_monto: monto, 
       p_metodo: metodo 
     });
     
+    // Si hay un error en la base de datos, lo lanzamos para que se vea en rojo
+    if (error) throw error;
+    
     toast('✅ Cobro registrado');
-    viewCreditos(); // Recargar la lista de deudas
-    loadState();    // Recargar el resumen principal (por si acaso)
+    
+    // 2. Esperamos a que la vista de créditos se vuelva a cargar antes de cerrar
+    await viewCreditos(); 
+    
+    // 3. Recargamos los datos del inicio (ventas de hoy, etc.)
+    loadState();    
+    
   } catch (e) { 
-    toast(errMsg(e), false); 
+    toast('Error al cobrar: ' + errMsg(e), false); 
   }
 };
   async function viewReportes() {
