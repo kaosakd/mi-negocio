@@ -1,0 +1,14 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+
+# Secretos: nunca subir claves privadas (service_role / secret)
+.env
+.env.*
+*.pem
+*.key
