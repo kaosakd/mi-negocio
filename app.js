@@ -42,22 +42,33 @@
   let DB = { clientes: [], proveedores: [], productos: [], hoy: { total: 0, n: 0 }, ultimas: [] };
   let carrito = [];
 
-  async function loadState() {
-    const [cli, prov, prod, vh, ul] = await Promise.all([
-      sb.from('clientes').select('id,nombre,telefono,email,fecha_registro').order('nombre'),
-      sb.from('proveedores').select('id,nombre,contacto,telefono,fecha_registro').order('nombre'),
-      sb.from('productos').select('id,nombre,descripcion,precio_venta,costo_compra,stock_actual,proveedor_id').order('nombre'),
-      sb.from('ventas').select('total').gte('fecha_hora', inicioDeHoyISO()),
-      sb.from('vw_movimientos').select('tipo,producto,cantidad,total,fecha_hora').order('fecha_hora', { ascending: false }).limit(5),
-    ]);
-        DB.clientes = cli.data || []; 
-    DB.proveedores = prov.data || []; 
-    DB.productos = (prod.data || []).map(x => ({ ...x, precio_venta: Number(x.precio_venta), costo_compra: Number(x.costo_compra), stock_actual: Number(x.stock_actual) }));
-    DB.hoy = { 
-      total: (vh.data || []).reduce((a, v) => a + Number(v.total), 0), 
-      n: (vh.data || []).length 
-    };
-    DB.ultimas = (ul.data || []).map(t => ({ ...t, cantidad: Number(t.cantidad || 1), total: Number(t.total) }));
+    async function loadState() {
+    try {
+      const [cli, prov, prod, vh, ul] = await Promise.all([
+        sb.from('clientes').select('id,nombre,telefono,email,fecha_registro').order('nombre'),
+        sb.from('proveedores').select('id,nombre,contacto,telefono,fecha_registro').order('nombre'),
+        sb.from('productos').select('id,nombre,descripcion,precio_venta,costo_compra,stock_actual,proveedor_id').order('nombre'),
+        sb.from('ventas').select('total').gte('fecha_hora', inicioDeHoyISO()),
+        sb.from('vw_movimientos').select('tipo,producto,cantidad,total,fecha_hora').order('fecha_hora', { ascending: false }).limit(5),
+      ]);
+
+      DB.clientes = cli.data || []; 
+      DB.proveedores = prov.data || []; 
+      DB.productos = (prod.data || []).map(x => ({ ...x, precio_venta: Number(x.precio_venta || 0), costo_compra: Number(x.costo_compra || 0), stock_actual: Number(x.stock_actual || 0) }));
+      
+      const ventasHoy = vh.data || [];
+      DB.hoy = { 
+        total: ventasHoy.reduce((a, v) => a + Number(v.total || 0), 0), 
+        n: ventasHoy.length 
+      };
+      
+      DB.ultimas = (ul.data || []).map(t => ({ ...t, cantidad: Number(t.cantidad || 1), total: Number(t.total || 0) }));
+      
+      renderSummary();
+    } catch (e) {
+      console.error("Error cargando datos:", e);
+      toast("Error al cargar datos: " + errMsg(e), false);
+    }
   }
 
   function renderSummary() {
