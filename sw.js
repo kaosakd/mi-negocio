@@ -1,9 +1,9 @@
 const CACHE_NAME = 'mi-negocio-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/config.js',
+  './',
+  './index.html',
+  './app.js',
+  './config.js',
   'https://cdn.tailwindcss.com'
 ];
 
