@@ -65,6 +65,18 @@
       DB.ultimas = (ul.data || []).map(t => ({ ...t, cantidad: Number(t.cantidad || 1), total: Number(t.total || 0) }));
       
       renderSummary();
+          // 👇 AGREGA ESTO AQUÍ 👇
+      // Sincronización automática con Google Sheets al cargar
+      if (C.GOOGLE_SHEET_URL && C.GOOGLE_SHEET_URL !== 'https://script.google.com/macros/s/AKfycbyiJKa1v6KWXKgi7PUx5WxV6nUzaCW9sedVsTaNLg63mCLCsKJPKD5LvrLFFy1HgXJ3fg/exec') {
+        sb.from('vw_movimientos').select('*').then(({data}) => {
+          if (data && data.length > 0) {
+            fetch(C.GOOGLE_SHEET_URL, { 
+              method: 'POST', 
+              body: JSON.stringify(data) 
+            }).catch(e => console.log('Error al sincronizar con Sheets:', e));
+          }
+        });
+      }
     } catch (e) {
       console.error("Error cargando datos:", e);
       toast("Error al cargar datos: " + errMsg(e), false);
