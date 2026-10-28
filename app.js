@@ -80,6 +80,11 @@
           }
         });
       }
+       } catch (e) { 
+      console.error("Error cargando datos:", e);
+      toast("Error al cargar datos: " + errMsg(e), false);
+    }
+  }
 
   function renderSummary() {
     $('#vHoy').textContent = money(DB.hoy.total);
