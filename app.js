@@ -67,7 +67,7 @@
       renderSummary();
           // 👇 AGREGA ESTO AQUÍ 👇
       // Sincronización automática con Google Sheets al cargar
-      if (C.GOOGLE_SHEET_URL && C.GOOGLE_SHEET_URL !== 'https://script.google.com/macros/s/AKfycbyiJKa1v6KWXKgi7PUx5WxV6nUzaCW9sedVsTaNLg63mCLCsKJPKD5LvrLFFy1HgXJ3fg/exec') {
+      if (C.GOOGLE_SHEET_URL && C.GOOGLE_SHEET_URL !== 'yu codigo') {
         sb.from('vw_movimientos').select('*').then(({data}) => {
           if (data && data.length > 0) {
             fetch(C.GOOGLE_SHEET_URL, { 
