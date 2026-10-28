@@ -22,4 +22,5 @@ window.APP_CONFIG = {
 
   // Pon true solo si activaste Google en Supabase → Authentication → Providers
   GOOGLE_LOGIN: false,
+  GOOGLE_SHEET_URL: 'https://script.google.com/macros/s/AKfycbyiJKa1v6KWXKgi7PUx5WxV6nUzaCW9sedVsTaNLg63mCLCsKJPKD5LvrLFFy1HgXJ3fg/exec'
 };
